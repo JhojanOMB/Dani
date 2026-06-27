@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feliz Cumple Mi Bonita</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght=700&family=Cormorant+Garamond:wght=400;500;600;700&family=Nunito:wght=300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="kuromi.ico">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Motores Gráficos Principales -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background-color: #060102;
+            color: #ffffff;
+            min-height: 100dvh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            overflow-x: hidden;
+            overflow-y: auto;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        #canvas-universo {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* --- PANTALLA DE BIENVENIDA --- */
+        #pantalla-bienvenida {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, #2d040e, #060102 90%);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), pointer-events 0.8s;
+        }
+
+        .input-contenedor {
+            position: relative;
+            width: 100%;
+            margin: 24px 0 16px 0;
+        }
+
+        .input-contenedor i {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 77, 109, 0.5);
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+
+        .input-nombre {
+            width: 100%;
+            padding: 15px 16px 15px 48px;
+            border-radius: 50px;
+            border: 1px solid rgba(164, 19, 60, 0.3);
+            background: rgba(10, 2, 5, 0.7);
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .input-nombre:focus {
+            border-color: #ff4d6d;
+            background: rgba(25, 4, 10, 0.85);
+            box-shadow: 0 0 25px rgba(255, 77, 109, 0.3);
+        }
+
+        .input-nombre:focus + i {
+            color: #ff4d6d;
+            text-shadow: 0 0 8px #ff4d6d;
+        }
+
+        /* --- ACABADOS GLASSMORPHISM PREMIUM --- */
+        .glass-card {
+            background: linear-gradient(
+                135deg,
+                rgba(30, 4, 12, 0.6),
+                rgba(8, 1, 3, 0.8)
+            );
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(164, 19, 60, 0.3);
+            border-top: 1px solid rgba(255, 143, 163, 0.3);
+            border-left: 1px solid rgba(255, 143, 163, 0.3);
+            border-radius: 32px;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.9), 0 0 40px rgba(164, 19, 60, 0.15);
+        }
+
+        .btn-magico {
+            background: linear-gradient(135deg, #a4133c 0%, #ff4d6d 50%, #ff758f 100%);
+            background-size: 200% auto;
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(164, 19, 60, 0.4);
+            transition: all 0.4s ease;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            animation: latido 3s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn-magico:hover {
+            background-position: right center;
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(255, 77, 109, 0.6);
+        }
+
+        @keyframes latido {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); box-shadow: 0 15px 35px rgba(255, 77, 109, 0.5); }
+        }
+
+        /* --- INTERFAZ DEL MODAL POEMA --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(4, 0, 1, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            z-index: 3000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+            padding: 40px 16px;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* --- TOCADISCOS MEJORADO --- */
+        .tocadiscos {
+            position: relative;
+            width: 130px;
+            height: 130px;
+        }
+
+        .vinyl-record {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            cursor: pointer;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: repeating-radial-gradient(circle, #2c141a 0px, #0f0305 4px, #3d141e 5px, #0a0103 7px);
+            border: 3px solid rgba(255, 77, 109, 0.3);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(164, 19, 60, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: box-shadow 0.4s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .vinyl-record.spinning {
+            animation: spin 3.5s linear infinite;
+            box-shadow: 0 15px 40px rgba(255, 77, 109, 0.4);
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .vinyl-center-album {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff4d6d, #a4133c);
+            border: 2px solid #ff758f;
+        }
+
+        .aguja {
+            position: absolute;
+            top: 6px;
+            right: 10px;
+            width: 4px;
+            height: 65px;
+            background: linear-gradient(to bottom, #ffffff, #a4133c);
+            border-radius: 4px;
+            transform-origin: center 5px;
+            transform: rotate(-35deg);
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 5;
+            box-shadow: -2px 5px 10px rgba(0,0,0,0.4);
+        }
+
+        .vinyl-record.spinning + .aguja { transform: rotate(5deg); }
+
+        .poema-texto {
+            font-family: 'Cormorant Garamond', serif;
+            color: #fff5f7;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .firma {
+            font-family: 'Caveat', cursive;
+            color: #ff4d6d;
+            text-shadow: 0 0 10px rgba(255, 77, 109, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LIENZO DEL UNIVERSO VINOTINTO INTERACTIVO -->
+    <canvas id="canvas-universo"></canvas>
+
+    <!-- PANTALLA DE BIENVENIDA -->
+    <div id="pantalla-bienvenida">
+        <div class="glass-card w-full max-w-sm text-center flex flex-col items-center p-8 m-4">
+            <h2 class="text-2xl font-black bg-gradient-to-r from-red-400 via-pink-400 to-rose-400 bg-clip-text text-transparent drop-shadow-sm">Haber presta tu nombre</h2>
+            <p class="text-rose-200/60 text-xs mt-1.5 font-medium">Esta sorpresa está resguardada para alguien muy especial.</p>
+            
+            <div class="input-contenedor">
+                <input type="text" id="nombre-input" class="input-nombre" placeholder="Escribe tu nombre aquí..." autocomplete="off">
+                <i class="fa-solid fa-heart"></i>
+            </div>
+
+            <button class="btn-magico text-sm py-3.5 w-full" onclick="verificarNombre()">
+                <i class="fa-solid fa-unlock-keyhole"></i> Verificar Acceso
+            </button>
+            <p id="error-msg" class="text-red-400 hidden mt-4 text-xs font-bold tracking-wide animate-pulse">
+                <i class="fa-solid fa-triangle-exclamation"></i> Mmm... tú no eres la dueña de este cumple 🧐
+            </p>
+        </div>
+    </div>
+
+    <!-- AUDIO MP3 -->
+    <audio id="musica-mp3" loop>
+        <source src="./media/sonido/cancion.mp3" type="audio/mpeg">
+    </audio>
+
+
+    <!-- INTERFAZ PRINCIPAL DELANTERA (2D FLOTANTE SOBRE EL ESPACIO) -->
+    <header class="w-full text-center pt-10 px-4 z-10 select-none">
+        <h1 class="text-3xl md:text-5xl font-black bg-gradient-to-r from-rose-400 via-pink-400 to-red-400 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(255,77,109,0.35)]">
+            Feliz Cumple, mi bonita 🎂
+        </h1>
+        <p class="text-rose-200/80 text-xs md:text-sm mt-3 max-w-md mx-auto bg-black/40 backdrop-blur-lg py-2 px-5 rounded-full border border-rose-900/40 inline-block tracking-wide">
+            No sé si sea poco para tu cumple, pero intentamos hacer algo especial para ti
+        </p>
+    </header>
+
+    <!-- Espaciador transparente dinámico para centrar visualmente el espacio de Kuromi -->
+    <div class="w-full flex-grow pointer-events-none"></div>
+
+    <!-- Fila de control inferior para abrir el regalo -->
+    <footer class="w-full flex justify-center pb-14 px-4 z-10">
+        <div class="w-full max-w-xs">
+            <button class="btn-magico w-full text-base py-4 shadow-[0_0_40px_rgba(255,77,109,0.4)]" onclick="activarSorpresa()">
+                <i class="fa-solid fa-gift"></i> Ábrelo completo
+            </button>
+        </div>
+    </footer>
+
+
+    <!-- MODAL DE LA SORPRESA CON TAILWIND GRID -->
+    <div class="modal-overlay" id="modal">
+        <div class="glass-card poema-content w-full max-w-md md:max-w-4xl p-6 md:p-10 my-auto">
+            
+            <h2 class="text-gradient bg-gradient-to-r from-pink-400 to-rose-400 bg-clip-text text-transparent text-2xl md:text-3xl font-extrabold text-center mb-8 tracking-wide drop-shadow-sm">
+                Para la niña de mis ojos...
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 w-full items-center md:items-start">
+                
+                <!-- COLUMNA IZQUIERDA: Reproductor de Vinilo -->
+                <div class="md:col-span-4 flex flex-col items-center justify-center bg-rose-950/15 p-6 rounded-3xl border border-rose-500/10 backdrop-blur-md self-center md:self-start shadow-inner">
+                    <div class="tocadiscos">
+                        <div class="vinyl-record" id="disco-vinilo" onclick="togglePlay()">
+                            <div class="vinyl-center-album flex items-center justify-center">
+                                <div class="w-2 h-2 bg-black rounded-full"></div>
+                            </div>
+                        </div>
+                        <div class="aguja"></div>
+                    </div>
+                    <span class="text-[11px] text-pink-300 font-bold uppercase tracking-widest mt-4 select-none cursor-pointer" id="texto-tip" onclick="togglePlay()">
+                        <i class="fa-solid fa-pause"></i> Toca para pausar
+                    </span>
+                </div>
+                
+                <!-- COLUMNA DERECHA: Poema + Torta al final + Firma -->
+                <div class="md:col-span-8 flex flex-col items-center text-center">
+                    
+                    <div class="poema-texto text-base md:text-lg leading-relaxed font-medium tracking-wide space-y-4 text-justify md:text-center">
+                        <p>Hola, Fosforito. ❤️‍🔥</p>
+
+                        <p>Sí, ya sé que vas a decir que soy un cansón o un lambón por escribirte esto, pero me aguantas porque hoy es tu cumpleaños.</p>
+
+                        <p>Quiero desearte un día muy bonito, lleno de risas, momentos felices y personas que te hagan sentir lo especial que eres. Espero que todo lo que te propongas se vaya cumpliendo y que lo que queda de año te traiga muchas cosas buenas.</p>
+
+                        <p>Aunque seas fastidiosa a veces (y sí, tenía que recordártelo jsksjskj 😌), también eres una persona muy importante para mí. Me encanta molestarte, hablar contigo y compartir esos momentos que terminan alegrándome el día más de lo que imaginas.</p>
+
+                        <p>Gracias por aguantar a este cansón que siempre está ahí molestándote y dándote cariño. Tal vez sí sea un poquito lambón, pero contigo me nace ser así.</p>
+
+                        <p>Espero que disfrutarás mucho tu día, que te consientan bastante (me incluyo), y que sonrías muchísimo, porque te ves muy bonita cuando sonríes.</p>
+
+                        <p>Y bueno, hoy más que nunca quiero recordarte que eres mi bonita. 🐧💌</p>
+                    </div>
+
+                    <!-- LA TORTA AL FINAL DEL TEXTO -->
+                    <div class="w-full flex justify-center my-8 border-t border-b border-rose-500/10 py-5">
+                        <model-viewer
+                            class="w-36 h-36 md:w-44 md:h-44 outline-none"
+                            src="./media/3d/torta.glb"
+                            auto-rotate
+                            disable-zoom
+                            interaction-prompt="none">
+                        </model-viewer>
+                    </div>
+
+                    <!-- Firma del autor -->
+                    <div class="mt-2 text-center">
+                        <p class="firma text-3xl md:text-4xl font-bold">
+                            Te quiero fosforito.
+                        </p>
+                        <span class="font-sans text-xs md:text-sm font-semibold text-rose-300/60 block mt-1 tracking-wider">
+                            Feliz día, y si soy lambón.
+                        </span>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="w-full flex justify-center mt-8">
+                <button class="bg-rose-950/40 text-rose-200 border border-rose-500/20 px-8 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 hover:bg-rose-900/50 hover:text-white transition group" onclick="cerrarModal()">
+                    <i class="fa-solid fa-xmark group-hover:rotate-90 transition-transform"></i> Cerrar Ventana
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN DEL UNIVERSO 3D INTEGRADO (THREE.JS) ---
+        const canvas = document.getElementById('canvas-universo');
+        const scene = new THREE.Scene();
+        
+        scene.fog = new THREE.FogExp2(0x060102, 0.045);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // ILUMINACIÓN PROFUNDA AMBIENTAL Y ENFOQUE
+        const lightAmbient = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(lightAmbient);
+
+        const lightFront = new THREE.DirectionalLight(0xfff0f3, 0.9);
+        lightFront.position.set(1, 4, 8);
+        scene.add(lightFront);
+
+        // Luz puntual de fondo interactiva (efecto aura vinotinto)
+        const lightGlowVinotinto = new THREE.PointLight(0xff0055, 1.8, 30);
+        lightGlowVinotinto.position.set(0, -1, -3);
+        scene.add(lightGlowVinotinto);
+
+        // CAMPO DE ESTRELLAS FIJAS
+        const cuentaEstrellas = 1000;
+        const geometriaEstrellas = new THREE.BufferGeometry();
+        const posicionesEstrellas = new Float32Array(cuentaEstrellas * 3);
+
+        for(let i = 0; i < cuentaEstrellas * 3; i += 3) {
+            posicionesEstrellas[i] = (Math.random() - 0.5) * 60;
+            posicionesEstrellas[i+1] = (Math.random() - 0.5) * 60;
+            posicionesEstrellas[i+2] = (Math.random() - 0.5) * 40 - 10;
+        }
+        geometriaEstrellas.setAttribute('position', new THREE.BufferAttribute(posicionesEstrellas, 3));
+        
+        const materialEstrellas = new THREE.PointsMaterial({
+            size: 0.06,
+            color: 0xffccd5,
+            transparent: true,
+            opacity: 0.65,
+            blending: THREE.AdditiveBlending
+        });
+        const campoEstrellas = new THREE.Points(geometriaEstrellas, materialEstrellas);
+        scene.add(campoEstrellas);
+
+
+        // NUEVO: SISTEMA DE DESTELLOS ROMÁNTICOS FLOTANTES (LOVE EMBERS)
+        const cuentaCorazones = 40;
+        const geometriaCorazones = new THREE.BufferGeometry();
+        const posicionesCorazones = new Float32Array(cuentaCorazones * 3);
+        const velocidadesCorazones = [];
+
+        for(let i = 0; i < cuentaCorazones * 3; i += 3) {
+            posicionesCorazones[i] = (Math.random() - 0.5) * 15;
+            posicionesCorazones[i+1] = (Math.random() - 0.5) * 15 - 2;
+            posicionesCorazones[i+2] = (Math.random() - 0.5) * 10;
+            velocidadesCorazones.push({
+                y: 0.005 + Math.random() * 0.01,
+                x: (Math.random() - 0.5) * 0.005
+            });
+        }
+        geometriaCorazones.setAttribute('position', new THREE.BufferAttribute(posicionesCorazones, 3));
+        
+        const materialCorazones = new THREE.PointsMaterial({
+            size: 0.15,
+            color: 0xff4d6d,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+        const particulasCorazones = new THREE.Points(geometriaCorazones, materialCorazones);
+        scene.add(particulasCorazones);
+
+
+        // SISTEMA DE ESTRELLAS FUGACES
+        const totalFugaces = 3;
+        const grupoFugaces = [];
+
+        for(let i = 0; i < totalFugaces; i++) {
+            const materialFugaz = new THREE.MeshBasicMaterial({
+                color: 0xff758f,
+                transparent: true,
+                opacity: 0
+            });
+            const geometryFugaz = new THREE.CylinderGeometry(0.008, 0.025, 1.8, 4);
+            geometryFugaz.rotateZ(Math.PI / 4);
+            
+            const mesh = new THREE.Mesh(geometryFugaz, materialFugaz);
+            scene.add(mesh);
+            
+            grupoFugaces.push({
+                mesh: mesh,
+                activa: false,
+                velocidad: 0.18,
+                timerReset: Math.random() * 150
+            });
+        }
+
+        // --- CARGA Y CONFIGURACIÓN AJUSTADA DE KUROMI ---
+        const kuromiContenedor = new THREE.Group();
+        scene.add(kuromiContenedor);
+
+        const loader = new THREE.GLTFLoader();
+        let kuromiModel = null; 
+        let baseHeightOffset = -0.5; 
+
+        loader.load('./media/3d/kuromi.glb', function (gltf) {
+            const elModeloReal = gltf.scene;
+            
+            // Re-centrado local perfecto
+            const caja = new THREE.Box3().setFromObject(elModeloReal);
+            const centro = caja.getCenter(new THREE.Vector3());
+
+            elModeloReal.position.set(-centro.x, -centro.y, -centro.z);
+            kuromiContenedor.add(elModeloReal);
+
+            kuromiContenedor.position.set(0, baseHeightOffset, 0);
+            kuromiContenedor.userData = { initialY: baseHeightOffset };
+
+            // ESCALA REDUCIDA ESTILIZADA
+            const escalaBase = window.innerWidth < 768 ? 0.6 : 0.9;
+            kuromiContenedor.scale.setScalar(escalaBase);
+
+            kuromiModel = kuromiContenedor;
+        });
+
+        camera.position.z = 8;
+
+        // MANEJO DE INTERACCIÓN / GESTOS TÁCTILES Y DE RATÓN
+        let isDragging = false;
+        let mouseX = 0, mouseY = 0;
+        let targetX = 0, targetY = 0;
+
+        window.addEventListener('mousedown', () => { isDragging = true; });
+        window.addEventListener('mouseup', () => { isDragging = false; mouseX = 0; mouseY = 0; });
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            mouseX = (e.clientX / window.innerWidth) - 0.5;
+            mouseY = (e.clientY / window.innerHeight) - 0.5;
+        });
+
+        window.addEventListener('touchstart', () => { isDragging = true; });
+        window.addEventListener('touchend', () => { isDragging = false; mouseX = 0; mouseY = 0; });
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            if(e.touches.length > 0) {
+                mouseX = (e.touches[0].clientX / window.innerWidth) - 0.5;
+                mouseY = (e.touches[0].clientY / window.innerHeight) - 0.5;
+            }
+        });
+
+        // --- BUCLE DE RENDERIZADO Y ANIMACIÓN ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = performance.now();
+
+            targetX += (mouseX - targetX) * 0.05;
+            targetY += (mouseY - targetY) * 0.05;
+
+            // Rotación y levitación fluida de Kuromi
+            if (kuromiModel) {
+                kuromiModel.rotation.y = targetX * 0.8 + (time * 0.0004);
+                kuromiModel.rotation.x = targetY * 0.3;
+                
+                const yOriginal = kuromiModel.userData.initialY || baseHeightOffset;
+                kuromiModel.position.y = yOriginal + Math.sin(time * 0.0012) * 0.07;
+            }
+
+            // Pulsación de la luz ambiental trasera
+            lightGlowVinotinto.intensity = 1.6 + Math.sin(time * 0.002) * 0.3;
+
+            // Movimiento suave del fondo estelar
+            campoEstrellas.rotation.y += 0.00008;
+
+            // Animación de las partículas flotantes de amor (Love Embers)
+            const coords = particulasCorazones.geometry.attributes.position.array;
+            let velIdx = 0;
+            for (let i = 1; i < coords.length; i += 3) {
+                coords[i] += velocidadesCorazones[velIdx].y; // Sube en Y
+                coords[i-1] += velocidadesCorazones[velIdx].x; // Oscila en X
+
+                // Reset si sale de la pantalla superior
+                if (coords[i] > 8) {
+                    coords[i] = -6;
+                    coords[i-1] = (Math.random() - 0.5) * 15;
+                }
+                velIdx++;
+            }
+            particulasCorazones.geometry.attributes.position.needsUpdate = true;
+
+            // Simulación de Estrellas Fugaces
+            grupoFugaces.forEach(fugaz => {
+                if (!fugaz.activa) {
+                    fugaz.timerReset--;
+                    if (fugaz.timerReset <= 0) {
+                        fugaz.mesh.position.set(
+                            (Math.random() - 0.3) * 25,
+                            (Math.random() * 5) + 5,
+                            (Math.random() - 0.5) * 15 - 5
+                        );
+                        fugaz.mesh.material.opacity = 1;
+                        fugaz.activa = true;
+                    }
+                } else {
+                    fugaz.mesh.position.x -= fugaz.velocidad;
+                    fugaz.mesh.position.y -= fugaz.velocidad;
+                    fugaz.mesh.material.opacity -= 0.01;
+
+                    if (fugaz.mesh.material.opacity <= 0) {
+                        fugaz.activa = false;
+                        fugaz.timerReset = Math.random() * 200 + 100;
+                    }
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // CONTROL RESPONSIVO DE DISEÑO
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            if (kuromiModel) {
+                const escalaBase = window.innerWidth < 768 ? 0.6 : 0.9;
+                kuromiModel.scale.setScalar(escalaBase);
+            }
+        });
+
+        // --- LÓGICA DE CONTROL DE LA INTERFAZ DE USUARIO ---
+        const musica = document.getElementById('musica-mp3');
+        const disco = document.getElementById('disco-vinilo');
+        const textoTip = document.getElementById('texto-tip');
+
+        function verificarNombre() {
+            const nombre = document.getElementById('nombre-input').value.trim().toLowerCase();
+            const errorMsg = document.getElementById('error-msg');
+            
+            if (nombre.includes('dani') || nombre.length >= 3) { 
+                document.getElementById('pantalla-bienvenida').style.opacity = '0';
+                document.getElementById('pantalla-bienvenida').style.pointerEvents = 'none';
+                
+                musica.play().then(() => {
+                    disco.classList.add('spinning');
+                }).catch(err => console.log("La reproducción automática esperará la interacción del regalo."));
+                
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.75 }, colors: ['#ff4d6d', '#a4133c', '#ffccd5'] });
+            } else {
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('nombre-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') verificarNombre();
+        });
+
+        function activarSorpresa() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('active');
+            
+            if (musica.paused) {
+                musica.play();
+                disco.classList.add('spinning');
+            }
+
+            const duracion = 4 * 1000;
+            const fin = Date.now() + duracion;
+
+            (function frame() {
+                confetti({
+                    particleCount: 3,
+                    angle: 60,
+                    spread: 60,
+                    origin: { x: 0, y: 0.8 },
+                    colors: ['#ff4d6d', '#a4133c', '#fff0f3']
+                });
+                confetti({
+                    particleCount: 3,
+                    angle: 120,
+                    spread: 60,
+                    origin: { x: 1, y: 0.8 },
+                    colors: ['#ff4d6d', '#a4133c', '#fff0f3']
+                });
+
+                if (Date.now() < fin) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function togglePlay() {
+            if (musica.paused) {
+                musica.play();
+                disco.classList.add('spinning');
+                textoTip.innerHTML = '<i class="fa-solid fa-pause"></i> Toca para pausar';
+            } else {
+                musica.pause();
+                disco.classList.remove('spinning');
+                textoTip.innerHTML = '<i class="fa-solid fa-play"></i> Toca para reproducir';
+            }
+        }
+    </script>
+</body>
+</html>
